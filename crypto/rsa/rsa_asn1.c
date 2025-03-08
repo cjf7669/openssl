@@ -39,8 +39,14 @@ static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         return 2;
     } else if (operation == ASN1_OP_D2I_POST) {
         if (((RSA *)*pval)->version != RSA_ASN1_VERSION_MULTI) {
-            /* not a multi-prime key, skip */
-            return 1;
+            /* not a multi-prime key, check default version */
+            if (((RSA *)*pval)->version == RSA_ASN1_VERSION_DEFAULT) {
+                return 1;
+            } else {
+                /* not default or multi-prime, invalid version*/
+                ERR_raise(ERR_LIB_ASN1, ASN1_R_ASN1_PARSE_ERROR);
+                return NULL;
+            }
         }
         return (ossl_rsa_multip_calc_product((RSA *)*pval) == 1) ? 2 : 0;
     }
