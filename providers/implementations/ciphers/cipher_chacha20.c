@@ -94,6 +94,7 @@ static int chacha20_get_params(OSSL_PARAM params[])
 
 static int chacha20_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
+    PROV_CHACHA20_CTX *ctx = (PROV_CHACHA20_CTX *)vctx;
     OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
@@ -103,6 +104,13 @@ static int chacha20_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, CHACHA20_KEYLEN)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
+    if (p != NULL
+        && !OSSL_PARAM_set_octet_ptr(p, &ctx->counter, CHACHA20_IVLEN)
+        && !OSSL_PARAM_set_octet_string(p, &ctx->counter, CHACHA20_IVLEN)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
